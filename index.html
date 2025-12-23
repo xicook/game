@@ -1,160 +1,68 @@
-<!DOCTYPE html>
+      <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Aurora City 3D — Compat</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { margin:0; overflow:hidden; background:#000; }
-  #ui {
-    position:fixed; top:10px; left:50%; transform:translateX(-50%);
-    padding:6px 12px; font-family:system-ui,Arial;
-    background:rgba(0,0,0,.6); color:#fff;
-    border-radius:12px; font-size:12px;
-    border:1px solid rgba(255,255,255,.3);
-    z-index:10;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aurora City 3D</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: black; }
+    canvas { display: block; }
+  </style>
 </head>
 <body>
-<div id="ui">Aurora City 3D • RP • Compat Mode</div>
 
-<!-- THREE core (classic) -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
-<!-- OrbitControls classic -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/controls/OrbitControls.js"></script>
-
-<script>
-(function(){
-
-  if (!window.THREE) {
-    document.body.innerHTML = "<h2 style='color:white'>Three.js não carregou</h2>";
-    return;
-  }
+<script type="module">
+  import * as THREE from 'https://unpkg.com/three@0.161.0/build/three.module.js';
+  import { OrbitControls } from 'https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js';
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x111122);
-  scene.fog = new THREE.Fog(0x111122, 20, 300);
+  scene.background = new THREE.Color(0x222222);
 
-  const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 500);
-  camera.position.set(20, 15, 20);
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(5, 5, 10);
 
-  const renderer = new THREE.WebGLRenderer({antialias:true});
-  renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // Lights
-  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-  const sun = new THREE.DirectionalLight(0xffffff, 1);
-  sun.position.set(50, 80, 30);
-  scene.add(sun);
-
-  // Controls
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.maxPolarAngle = Math.PI/2.1;
 
-  // Ground
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(10, 10, 10);
+  scene.add(light);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambient);
+
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(500, 500),
-    new THREE.MeshStandardMaterial({color:0x222222})
+    new THREE.PlaneGeometry(100, 100),
+    new THREE.MeshStandardMaterial({ color: 0x333333 })
   );
-  ground.rotation.x = -Math.PI/2;
+  ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // Simple textured house (procedural)
-  function house(x,z){
-    const group = new THREE.Group();
-
-    const wallTex = document.createElement("canvas");
-    wallTex.width = wallTex.height = 128;
-    const g = wallTex.getContext("2d");
-    g.fillStyle="#bdbdbd"; g.fillRect(0,0,128,128);
-    g.fillStyle="#9a9a9a";
-    for(let y=0;y<128;y+=16){ g.fillRect(0,y,128,2); }
-    const wallMap = new THREE.CanvasTexture(wallTex);
-
-    const body = new THREE.Mesh(
-      new THREE.BoxGeometry(6,4,6),
-      new THREE.MeshStandardMaterial({map:wallMap})
-    );
-    body.position.y=2;
-    group.add(body);
-
-    const roof = new THREE.Mesh(
-      new THREE.ConeGeometry(5,2,4),
-      new THREE.MeshStandardMaterial({color:0x7a2a2a})
-    );
-    roof.position.y=5;
-    roof.rotation.y=Math.PI/4;
-    group.add(roof);
-
-    group.position.set(x,0,z);
-    scene.add(group);
-  }
-
-  // Antenna
-  function antenna(x,z){
-    const g = new THREE.Group();
-    const pole = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.3,0.5,25,12),
-      new THREE.MeshStandardMaterial({color:0xaaaaaa})
-    );
-    pole.position.y=12.5;
-    g.add(pole);
-
-    for(let i=0;i<3;i++){
-      const panel = new THREE.Mesh(
-        new THREE.BoxGeometry(0.4,3,1),
-        new THREE.MeshStandardMaterial({color:0xffffff})
-      );
-      panel.position.y=24;
-      panel.rotation.y=i*2*Math.PI/3;
-      panel.position.x=Math.cos(panel.rotation.y)*1.2;
-      panel.position.z=Math.sin(panel.rotation.y)*1.2;
-      g.add(panel);
-    }
-
-    const light = new THREE.PointLight(0xff0000,1,30);
-    light.position.y=26;
-    g.add(light);
-
-    g.position.set(x,0,z);
-    scene.add(g);
-  }
-
-  // Layout
-  for(let i=0;i<25;i++){
-    house((Math.random()-0.5)*60,(Math.random()-0.5)*60);
-  }
-  antenna(0,0);
-
-  for(let i=0;i<30;i++){
-    house((Math.random()-0.5)*120,-120+Math.random()*40);
-  }
-
-  const hq = new THREE.Mesh(
-    new THREE.BoxGeometry(18,10,18),
-    new THREE.MeshStandardMaterial({color:0x6f4cff})
+  const cube = new THREE.Mesh(
+    new THREE.BoxGeometry(),
+    new THREE.MeshStandardMaterial({ color: 0x8844ff })
   );
-  hq.position.set(0,5,-120);
-  scene.add(hq);
+  cube.position.y = 1;
+  scene.add(cube);
 
-  function loop(){
+  function animate() {
+    requestAnimationFrame(animate);
     controls.update();
-    renderer.render(scene,camera);
-    requestAnimationFrame(loop);
+    renderer.render(scene, camera);
   }
-  loop();
 
-  addEventListener("resize",()=>{
-    camera.aspect=innerWidth/innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth,innerHeight);
-  });
-
-})();
+  animate();
 </script>
+
 </body>
 </html>
+
